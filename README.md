@@ -21,48 +21,81 @@ Supposed we have built an online news website, the site traffic usually starts t
 * How is the website handling sessions?
 * What are your loading balanceing considerations? (scaling, caching, session management, etc.)?
 
-## Terms
+## The Old School
 
-### Vertical Scale
+> A traditional auto-scaling web application are usually consisted of a some classic components. They are ***Load Balancer***, couples of of ***Auto Scalers***, and a bunch of ***Server Instances***.
 
-There are some terms we need to clarify first. One solution we can come up with is to add more hardware resources, in terms of more processor units, more memory, or physical disks, to a single unit. In that way we have more powerful servers to serve the clients. This is called vertical scaling.
+### Load Balancer
 
-### Horizontal Scale
+The most important component of a modern web application must be the **Loaod balancer**. A load balancer serves a single point of contact for clients and distributes the workload across multiple target servers.
 
-Instead of vertical scaling, another approach is to horizontally add or remove instances with the same hardware specification. This is called horizontal scaling.
+#### Routing
 
-## Load Balancer
+The routing policies of the load balancer can be configured with `protocol` and `port`, regarding to both the inbound and outbound traffics.
 
-## Routing
+|inbound protocol   |   |   | outbound protocol  |   |
+|---|---|---|---|---|
+|TCP   | aa  | c  |  HTTP, HTTPS, Websocket |   |
+|SSL/TLS   | b |  c |  HTTP HTTPS Websocket|   |
+|UDP   |  b |  c |  HTTP HTTPS Websocket |   |
+|TCP_UDP | v  |  c |  HTTP HTTPS Websocket |   |
 
-## Session Handling
+The ports ranges from 1 to 65535
 
-## Health Check
+#### Routing Algorithm
 
-Health check is performing from by the auto-scaler. It routinely make http requests to the running instances's endpoint for like `/heathz` to make sure the instance is healthy. If the status code is not equaled to `200`, the auto-scaler will turns of the instance and select another new instance to turn it on.
+* **The least connection**: Selects the service with the fewest active connections.
+* **The list response time**: Selects the service with lowest average respose time.
+* **Round Robin**: The most commonly used routing algorithm is [***Round-robin***](https://en.wikipedia.org/wiki/Round-robin_scheduling). After the load balancer takes the requests from clients, it fileters out the requests with rules of protocols and ports, the load balance then continuous rotates a list of target servers attached to it and forwards the requests to them.
 
-## Monitoring
+#### Health Check
 
-## Security Settings
+Health check is performing from by the load balancers. It routinely makes http requests to the target instances's endpoint like `/heathz` through a ping port like `80`, to examine the instance is healthy or not. If the status code is not equaled to `200`, the load balancer will unregister this instance from the sending list, until the failed instacnes goes back up again. New requests will stop sending to the unhealthy targes, instead spread to other healthy instances.
 
-## ACL
+#### Session Handling
 
-## VM/Container Provisioning
+#### Security Settings
 
-## Auto Scaling Policy and Metrics
+#### ACL
+
+#### Monitoring
+
+The most commonly used serviceis [**Prometheus**](https://prometheus.io/). The powerful time series database constantly scrapes the metrics from different exporters offered by other third-party services. With fancy browser based UI, we can easily define our Service-Level Indicator(SLI)s, monitor our web application from different perspective of views, and alert when abnormal happens.
+
+### Auto Scalers
+
+The auto scaler compoments mostly sit in between the load balancer and the group of our server instances. It runs some algorithms to decide when and how to scale up/down of the number of the running instances.
+
+#### Auto Scaling Policy and Metrics
 
 * Scaling timing: the auto-scaler first needs to decide when to perform the scaling actions. It either can proactively provision/deprovision resources ahead of the workload changes if they are predictable since the provision/deprovision process takes considerable time or can perform actions relatively when workload change has already happened.
+* Observer: we can run a program intercepting the requests from the load balancer, right before they sent to those target instances. In that way we can easily count the number of the reqeusts, and set the threshold to create more server instacnes, or to shrink the number of the running instances.
 
-## Proejct Deployment
+#### VM/Container Provisioning
 
+### Proejct Deployment
+
+### Server Instacnes
+
+Servers are the most bottom level of our web application. They can be some services, some databases, or some API endpoints serving those reqeusts come from the web clients. They are the workers who do the heavy calculations and perhaps read/write operations. Of cousrse, they are considered the basic units to perform the scaling procedures.
+
+#### Vertical Scale
+
+One solution we can come up with is to add more hardware resources, in terms of more processor units, more memory, or physical disks, within a single unit. In that way we have more powerful capabilities to serve the clients. This is called vertical scaling, also known as "scaling up". Vertical scaling sometimes referes to the software performance improvements, like optimizing algorithms and application code.
+
+#### Horizontal Scale
+
+Instead of vertical scaling, another approach is to add more units to the application's cloud architecture. This means adding more small capacity units instead of addning a single unit of larger capacity. The reqeusts for resources are then spread accross multiple units thus reducing the excess load on a single machine. This is called horizontal scaling, also called "scaling out".
 
 ## Kubernetes
 
-Desinging your API is microservices and adding horizontal scaling might seems like the best choice nowadays, unless your application is already running in an on-premise environment and your will need to scale it because of unexpected large spikes in web traffic. [Kubernetes](https://github.com/kubernetes/kubernetes) is one of the best choice to help you achieve this.
+> Desinging your API in microservices and adding horizontal scaling might seems like the best choice nowadays, unless your application is already running in an on-premise environment and your will need to scale it because of unexpected large spikes in web traffic. [Kubernetes](https://github.com/kubernetes/kubernetes) is one of the best choice to help you achieve this.
 
-### HPA
+### HPA (k8s auto-scaler)
 
 Kubernetes has a kind of resource called  Horizontal Pod AutoScaler. It automatically scales the pods in replication controller, deployment, and replicaset based on observed CPU utilization (or with custom metrics support, on some other application-supported metrics)
+
+### Pods (microservices)
 
 ### Rolling Upate/Rollback
 
