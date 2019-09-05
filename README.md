@@ -29,16 +29,15 @@ Supposed we have built an online news website, the site traffic usually starts t
 
 The most important component of a modern web application must be the **Loaod balancer**. A load balancer serves a single point of contact for clients and distributes the workload across multiple target servers.
 
-#### Routing
+#### Routing configuration
 
-The routing policies of the load balancer can be configured with `protocol` and `port`, regarding to both the inbound and outbound traffics.
+The load balancer can be designed to route the requests to its targets using `protocol` and `port numbers`, regarding to both the inbound and outbound traffics.
 
-|inbound protocol   |   |   | outbound protocol  |   |
-|---|---|---|---|---|
-|TCP   | aa  | c  |  HTTP, HTTPS, Websocket |   |
-|SSL/TLS   | b |  c |  HTTP HTTPS Websocket|   |
-|UDP   |  b |  c |  HTTP HTTPS Websocket |   |
-|TCP_UDP | v  |  c |  HTTP HTTPS Websocket |   |
+|Inbound Protocol|Outbound Protocol|Health Check Protocol|
+|---|---|---|
+|TCP   | TCP    |  HTTP, HTTPS, TCP |
+|SSL/TLS   | TCP/TLS | HTTP HTTPS TCP|  
+|UDP   |  UDP  |  HTTP HTTPS TCP |
 
 The ports ranges from 1 to 65535
 
@@ -54,26 +53,35 @@ Health check is performing from by the load balancers. It routinely makes http r
 
 #### Session Handling
 
+* Sticky
+* Non-sticky
+
 #### Security Settings
 
 #### ACL
 
-#### Monitoring
+### Auto Scaler
 
-The most commonly used serviceis [**Prometheus**](https://prometheus.io/). The powerful time series database constantly scrapes the metrics from different exporters offered by other third-party services. With fancy browser based UI, we can easily define our Service-Level Indicator(SLI)s, monitor our web application from different perspective of views, and alert when abnormal happens.
-
-### Auto Scalers
-
-The auto scaler compoments mostly sit in between the load balancer and the group of our server instances. It runs some algorithms to decide when and how to scale up/down of the number of the running instances.
+The auto scaler compoments are mostly sit in between the load balancer and groups of server instances. They monitor the workloads and runs some algorithms to decide when and how to scale up/down of the number of the running instances.
 
 #### Auto Scaling Policy and Metrics
 
+Run a program intercepts the requests from the load balancer, right before they are sent to those target instances. In that way we can easily count the number of the reqeusts, or the size of the data, and set the threshold to increase or to reduce the number of server instacnes.
+
 * Scaling timing: the auto-scaler first needs to decide when to perform the scaling actions. It either can proactively provision/deprovision resources ahead of the workload changes if they are predictable since the provision/deprovision process takes considerable time or can perform actions relatively when workload change has already happened.
-* Observer: we can run a program intercepting the requests from the load balancer, right before they sent to those target instances. In that way we can easily count the number of the reqeusts, and set the threshold to create more server instacnes, or to shrink the number of the running instances.
+* Workload prediction:
+* Adaptivity to change:
+* Oscillation Mitigation:
+
+#### Monitoring
+
+* Low-level indicator:
+* High-level indicator:
+* Hybrid:
 
 #### VM/Container Provisioning
 
-### Proejct Deployment
+#### Proejct Deployment
 
 ### Server Instacnes
 
@@ -93,10 +101,14 @@ Instead of vertical scaling, another approach is to add more units to the applic
 
 ### HPA (k8s auto-scaler)
 
-Kubernetes has a kind of resource called  Horizontal Pod AutoScaler. It automatically scales the pods in replication controller, deployment, and replicaset based on observed CPU utilization (or with custom metrics support, on some other application-supported metrics)
+Kubernetes has a kind of resource called  Horizontal Pod AutoScaler. It automatically scales the pods in replication controller, deployment, and replicaset based on observed **CPU/Memory utilization** (or with custom metrics support, on some other application-supported metrics)
 
 ### Pods (microservices)
 
-### Rolling Upate/Rollback
+#### Rolling Upate/Rollback
 
-Use [Helm](https://github.com/helm/helm) to deploy your application in Kubernetes cluster. Helm suports rolling update and rollback mechanisms letting you quickly switch your application back and forth in betwween different version in case of any unexpected situation happaned, or disaster reocvery.
+Use [Helm](https://github.com/helm/helm) to deploy your application in Kubernetes cluster. Helm suports rolling update and rollback mechanisms letting you quickly switch your application back and forth in betwween different versions. In case of any testing scenarios or disaster reocvery, you can rollback your application in a short time.
+
+<!-- ### Monitoring
+
+Regarding to application level's monitoring. the most commonly used service is [**Prometheus**](https://prometheus.io/). The powerful time series database constantly scrapes the metrics from different exporters offered by other third-party services. With fancy browser based UI, we can easily define our Service-Level Indicator(SLI)s, monitor our web application from different perspective of views, and alert when abnormal happens. -->
