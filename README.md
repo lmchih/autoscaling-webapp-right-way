@@ -2,9 +2,16 @@
 
 ## Preface
 
-In this article we are going to learn some common problems and solutions of how to automatically scale the modern web applications. It aims to present a good practice/guideline designing a auto-scalable web application.
+In this article we are going to learn some common solutions of how to automatically scale a modern web application. It aims to present a good practice/guideline to designing an auto-scalable web application.
 
-Supposed we have built an online news website, the site traffic usually starts to going up in the morning, and then goes down gradually when the time is closed to the noon. An e-commerce site usually suffers sudden burst of traffic especially on holidays like Black Friday. These heavy traffic spikes may take down our service in a short time, so we need to know when and how to scale up and down our servers.
+## How does auto-scaling work
+
+Essentially, auto-scaling works in two steps. First, it determines if the current resource availibity matches the resource demand. Second, it adjusts the availibility accordingly. For example, says we have built a news website, in the morning users causes a demand for 5 servers, but you only have 3 available. The auto-scaler should provision two more for you to meet the demand. Likewise, when users leave during the night, the auto-scaler should shrink the deployment to 1 or 2 servers to save money. To achieve this task, the auto-scaler requires monitoring information, which should be up to date and offer useful information about the status your cloud application. A good metric to monitor is one that relates to a single layer of your application. For instance, recording how many users want to access your service via a load balancer would be good. Monitoring CPU usage of a single unit, however, may be a bad idea since in case of under-provisioning, it does not shows how many additional resources is needed, only that there is a problem. A simple auto-scaler works in reactive fashion: resource availability is modified as the reaction when the threshold value has been passed.
+The typical reaction would be like:
+
+* Add `X` servers
+* wait until they have booted completely, and
+* investigate if the resource availability matches demands, repeating as needed.
 
 ## Auto-Scaling Checklist
 
@@ -35,21 +42,21 @@ The load balancer can be designed to route the requests to its targets using `pr
 
 |Inbound Protocol|Outbound Protocol|Health Check Protocol|
 |---|---|---|
-|TCP   | TCP    |  HTTP, HTTPS, TCP |
-|SSL/TLS   | TCP/TLS | HTTP HTTPS TCP|  
-|UDP   |  UDP  |  HTTP HTTPS TCP |
+|TCP|TCP|HTTP/HTTPS/TCP|
+|SSL/TLS|TCP/TLS| HTTP/HTTPS/TCP|  
+|UDP|UDP|HTTP/HTTPS/TCP|
 
 The ports ranges from 1 to 65535
 
 #### Routing Algorithm
 
 * **The least connection**: Selects the service with the fewest active connections.
-* **The list response time**: Selects the service with lowest average respose time.
-* **Round Robin**: The most commonly used routing algorithm is [***Round-robin***](https://en.wikipedia.org/wiki/Round-robin_scheduling). After the load balancer takes the requests from clients, it fileters out the requests with rules of protocols and ports, the load balance then continuous rotates a list of target servers attached to it and forwards the requests to them.
+* **The least response time**: Selects the service with lowest average respose time.
+* **Round Robin**: The most commonly used routing algorithm is [***Round-robin***](https://en.wikipedia.org/wiki/Round-robin_scheduling). After the load balancer takes the requests from clients, filetered with rules of protocols and port numbers, the load balancer then forwards the requests to a list of target servers attached to it in rotations.
 
 #### Health Check
 
-Health check is performing from by the load balancers. It routinely makes http requests to the target instances's endpoint like `/heathz` through a ping port like `80`, to examine the instance is healthy or not. If the status code is not equaled to `200`, the load balancer will unregister this instance from the sending list, until the failed instacnes goes back up again. New requests will stop sending to the unhealthy targes, instead spread to other healthy instances.
+Health check is performed by the load balancers. It routinely generates http requests to the target instances's endpoint like `/heathz`, through a ping port, for eample, `80`, to examine the instance is healthy or not. If the status code is not equaled to `200`, the load balancer will unregister this instance from the sending list, until the failed instacnes goes back up again. New requests will stop sending to the unhealthy targes, instead spread to other healthy instances.
 
 #### Session Handling
 
@@ -66,7 +73,7 @@ The auto scaler compoments are mostly sit in between the load balancer and group
 
 #### Auto Scaling Policy and Metrics
 
-Run a program intercepts the requests from the load balancer, right before they are sent to those target instances. In that way we can easily count the number of the reqeusts, or the size of the data, and set the threshold to increase or to reduce the number of server instacnes.
+Run a program intercepts the requests from the load balancer, right before they are sent to those target instances. In that way we can easily observe the number of the read/writes reqeusts per seconds(minutes), then set the threshold to increase or to reduce the number of server instances.
 
 * Scaling timing: the auto-scaler first needs to decide when to perform the scaling actions. It either can proactively provision/deprovision resources ahead of the workload changes if they are predictable since the provision/deprovision process takes considerable time or can perform actions relatively when workload change has already happened.
 * Workload prediction:
@@ -82,6 +89,8 @@ Run a program intercepts the requests from the load balancer, right before they 
 #### VM/Container Provisioning
 
 #### Proejct Deployment
+
+To deploy the new version of the products without the downtime is an art.
 
 ### Server Instacnes
 
