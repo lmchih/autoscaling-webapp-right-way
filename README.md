@@ -6,11 +6,11 @@ In this article we are going to learn some common solutions of how to automatica
 
 ## How does auto-scaling work
 
-Essentially, auto-scaling works in two steps. First, it determines if the current resource availibity matches the resource demand. Second, it adjusts the availibility accordingly. For example, says we have built a news website, in the morning users causes a demand for 5 servers, but you only have 3 available. The auto-scaler should provision 2 more for you to meet the demand. Likewise, when users leave during the night, the auto-scaler should shrink the deployment to 1 or 2 servers to save money. 
+Essentially, auto-scaling works in two steps. First, it determines if the current resource availibity matches the resource demand. Second, it adjusts the availibility accordingly. For example, says we have built a news website, in the morning users causes a demand for 5 servers, but you only have 3 available. The auto-scaler should provision 2 more for you to meet the demand. Likewise, when users leave during the night, the auto-scaler should shrink the deployment to 1 or 2 servers to save money.
 
 To achieve this task, the auto-scaler requires monitoring information, which should be up to date and offering useful information about the status your cloud application. A good metric to monitor is one that relates to a single layer of your application. For instance, recording how many users want to access your service via a load balancer would be good. Monitoring CPU usage of a single unit, however, may be a bad idea since in case of under-provisioning, it does not shows how many additional resources is needed, only that there is a problem. A simple auto-scaler works in reactive fashion: resource availability is modified as the reaction when the threshold value has been passed. The typical reaction would be like:
 
-* Add `X` servers
+* Add `N` servers
 * wait until they have booted completely, and
 * investigate if the resource availability matches demands, repeating as needed.
 
@@ -50,10 +50,24 @@ Health check is performed by the load balancers. It routinely generates http req
 
 #### Session Handling
 
-* Sticky
-* Non-sticky
+Since we do not want to store a session object in a common layer globally like a database somewhre, for better porformance, we want to set the load balancer with a `sticky session`, whcih means the load balancer always routes the series interactions from the same web user to the same server instacne. In that way, the instacne can cached the user data locally at the same physical instance. If the instance has been terminated or has failed a health check, the load balancer will route the requests to another instance.
 
 #### Security Settings
+
+A security group acts like as a firewall that controlls the traffic to and from one or more instances.
+
+e.g.
+
+|Inbound||||
+|---|---|---|---|
+|Source|Protocol|Port Range|Description
+|0.0.0.0/0|TCP|listener|Allow all inbound traffic on the load balacner listener port
+
+|Outbound||||
+|---|---|---|---|
+|Destination|Protocol|Port Range|Description
+|instance security group|TCP|listener|Allow outbound traffic to instances on the listener port
+|instance security group|TCP|health check|ALlow outbound traffic to nstances on the health check port
 
 ### Auto Scaler
 
@@ -101,6 +115,8 @@ Instead of vertical scaling, another approach is to add more units to the applic
 
 > Desinging your API in microservices and adding horizontal scaling might seems like the best choice nowadays, unless your application is already running in an on-premise environment and your will need to scale it because of unexpected large spikes in web traffic. [Kubernetes](https://github.com/kubernetes/kubernetes) is one of the best choice to help you achieve this.
 
+![Ingress-kubernetes-cluster](./ingress-k8s-cluster.jpg "ingress kubernetes cluster")
+
 ### Ingress Controller (k8s load balancer)
 
 [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) is a Kubernetes resource that encapsulates a collection of rules and configuration for routing external HTTP(S) traffic to internal services. We can set up HTTP Load Balancer with Ingress.
@@ -121,7 +137,7 @@ Kubernetes Pods are the basic unit. You can think of it as a baby computer(serve
 
 Use [Helm](https://github.com/helm/helm) to deploy your application in Kubernetes cluster. Helm suports rolling update and rollback mechanisms letting you quickly switch your application back and forth in betwween different versions. In case of any testing scenarios or disaster reocvery, you can rollback your application in a short time.
 
-## Auto-Scaling In Practice
+<!-- ## Auto-Scaling In Practice
 
 * **What component(s) of the application do we want to auto-scale?**
 
@@ -164,7 +180,7 @@ We need to set reasonable lower and upper limits for our deployment size. The lo
 * How is the website handling sessions?
 * What are your loading balanceing considerations? (scaling, caching, session management, etc.)?
 
-ex. Limit deployment sizes to between 1 to 20 instances.
+e.g. Limit deployment sizes to between 1 to 20 instances.
 
 * **What metric do we use for determine when to scale?**
 
@@ -174,6 +190,14 @@ is related to only the pertinent set of components, and
 is not capped by the performance of the current deployment size (as it is impossible to know by how much capacity demand exceeds availability if our reporting is capped by current availability).
 This means that measuring e.g. CPU usage across all servers we have right now is bad, because high values only tells us that we need more servers, but not how many. It is therefore better to measure, e.g., how many of certain typical or time-critical queries against a database take to finish, or what the current request rate is, coming in through a load balancer. If we have insufficient capacity available, at least we know by how much we need to scale up.
 
-ex. requests per second, as reported by the load balancer
+e.g. requests per second, as reported by the load balancer
 
-> NOTE: It is good to pick a conservative number for a server instance’s capacity first and then test rigorously to find a value closer to the actual limit. The capacity is of course dependent on a number of factors, including how many CPU cores and how much RAM we assign to each server instance.
+> NOTE: It is good to pick a conservative number for a server instance’s capacity first and then test rigorously to find a value closer to the actual limit. The capacity is of course dependent on a number of factors, including how many CPU cores and how much RAM we assign to each server instance. -->
+
+## Reference
+
+* [Advanced Predictive and Proactive Auto Scaling](https://www.citycloud.com/advanced-predictive-and-proactive-auto-scaling/)
+
+* [Auto-Scaling Web Application in Clouds: A Taxonomy and Survey](http://www.buyya.com/papers/AutoScaleWebAppClouds-ACMCS.pdf)
+
+* [AWS Elastic Load Balancing features](https://aws.amazon.com/elasticloadbalancing/features/)
