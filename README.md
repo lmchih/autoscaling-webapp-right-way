@@ -46,11 +46,11 @@ The ports ranges from 1 to 65535
 
 #### Health Check
 
-Health check is performed by the load balancers. It routinely generates http requests to the target instances's endpoint like `/heathz`, through a ping port, e.g., `80`, to examine the instance is healthy or not. If the status code is not equaled to `200` for couples of tries, the load balancer will unregister this instance from the sending list, until it goes back up healthy again. New requests will stop sending to the unhealthy targes, instead spread to other healthy instances.
+Health check is performed by the load balancers. It routinely generates http requests to the target instances's endpoint like `/heathz`, through a ping port, e.g., `80`, and examine the instance is healthy or not. If the status code is not equaled to `200` for couples of tries, the load balancer will unregister this instance from the sending list, until it goes back up healthy again. New requests will stop sending to the unhealthy targes, instead spread to other healthy instances.
 
 #### Session Handling
 
-Since we do not want to store a session object in a common layer globally like a database somewhre, for better porformance, we want to set the load balancer with a `sticky session`, whcih means the load balancer always routes the series interactions from the same web user to the same server instacne. In that way, the instacne can cached the user data locally at the same physical instance. If the instance has been terminated or has failed a health check, the load balancer will route the requests to another instance.
+Since we do not want to store a session object in a common layer globally like a database somewhre and for better porformance, we want to set the load balancer with a `sticky session`, whcih means the load balancer always routes the series interactions from the same web user to the same server instacne. In that way, the instacne can cached the user data locally at the same physical instance. If the instance has been terminated or has failed a health check, the load balancer will route the requests to another instance.
 
 #### Security Settings
 
@@ -71,11 +71,11 @@ e.g.
 
 ### Auto Scaler
 
-The auto scaler compoments are mostly sit in between the load balancer and groups of server instances. They monitor the workloads and runs some algorithms to decide when and how to scale up/down of the number of the running instances. An auto-scaler is considered good if it can predict the future requests and proactively manage the server instances.
+The auto scalers are mostly sit in between the load balancer and groups of server instances. They monitor the workloads and runs some algorithms to decide when and how to scale up/down of the number of the running instances. An auto-scaler is considered good if it can predict the future requests and proactively manage the server instances.
 
 #### Monitoring
 
-The monitoring subsystem is responsible for accepting monitoring information and storing information of each metric in a time series database. Implement a program intercepts the requests from the load balancer, right before they are sent to those target instances. In that way we can easily observe the number of the read/writes reqeusts per seconds(minutes).
+The monitoring subsystem is responsible for accepting monitoring information and storing information of each metric in a time series database. Implementing a program to intercept the requests from the load balancer, right before they are sent to those target instances. In that way we are able to easily observe the number of the read/write reqeusts per seconds(minutes).
 
 #### Auto Scaling Policy and Metrics
 
@@ -85,11 +85,9 @@ Then set the threshold to increase or to reduce the number of server instances. 
 
 The prediction subsystem analyzes the monitoring information and establishes a cloud deployment resize plan.
 
-* **Predictor**: generate differect prediction values from different metric or models, then convert the prediction values as the input of analyzer. There are couple directions to design a predictor:
+* **Predictor**: generates differect prediction values from different metrics or models, and then converts the prediction values as the inputs to the Analyzer. Think of weather forecasting, no one would use a single model ore a single metric to accurate predict weather. Predicting workloads is as the same philosophy. We always need more than one type of input and more than one type of model to predict server loads.
 
-Think of weather forecasting, no one would use a single model ore a single metric to accurate predict weather. Predicting workloads is as the same philosophy. We always need more than one type of input and more than one type of model to predict server loads.
-
-* **Analyzer**: accumulate all the prediction values from the Prdeictor and analyze the data with some kind of algorithms with the following techniques:
+* **Analyzer**: accumulates all the prediction values from the Prdeictor and analyzes the data with algorithms of the following techniques:
 
 1. detecting recurring patterns
 2. determine current demand variations
@@ -101,7 +99,7 @@ Think of weather forecasting, no one would use a single model ore a single metri
 
 ### Server Instacnes
 
-Servers are the most bottom level of our web application. They can be some services, some databases, or some API endpoints serving those reqeusts come from the web clients. They are the workers who do the heavy calculations and perhaps read/write operations. Of cousrse, they are considered the basic units to perform the scaling procedures.
+Servers are the most bottom level of our web application. They can be some services, some databases, or some API endpoints serving those reqeusts from the web clients. They are the workers who do the heavy calculations and perhaps read/write operations. Of cousrse, they are considered the basic units to perform the scaling procedures.
 
 #### Vertical Scale
 
@@ -113,7 +111,7 @@ Instead of vertical scaling, another approach is to add more units to the applic
 
 ## The Kubernetes Way
 
-> Desinging your API in microservices and adding horizontal scaling might seems like the best choice nowadays, unless your application is already running in an on-premise environment and your will need to scale it because of unexpected large spikes in web traffic. [Kubernetes](https://github.com/kubernetes/kubernetes) is one of the best choice to help you achieve this.
+> Desinging your API in microservices and adding horizontal scaling might seem like the best choice nowadays, unless your application is already running in an on-premise environment and your will need to scale it because of unexpected large spikes in web traffic. [Kubernetes](https://github.com/kubernetes/kubernetes) is one of the best choice to help you achieve this.
 
 ![Ingress-kubernetes-cluster](./ingress-k8s-cluster.jpg "ingress kubernetes cluster")
 
@@ -125,13 +123,13 @@ Instead of vertical scaling, another approach is to add more units to the applic
 
 Kubernetes has a kind of resource called  Horizontal Pod AutoScaler. It automatically scales the pods in replication controller, deployment, and replicaset based on observed **CPU/Memory utilization** (or with custom metrics support, on some other application-supported metrics)
 
-#### Monitoring
+#### k8s cluster monitoring
 
-Regarding to application level's monitoring. the most commonly used service is [**Prometheus**](https://prometheus.io/). The powerful time series database constantly scrapes the metrics from different exporters offered by other third-party services. With fancy browser based UI, we can easily define our Service-Level Indicator(SLI)s, monitor our web application from different perspective of views. `node-exporter` might be a good start, it provides lots of imformation about the CPU, memory, and I/O disk usages, which are useful for the auto-scaler to do the jobs.
+Regarding to application level's monitoring, the most commonly used service is [**Prometheus**](https://prometheus.io/). This powerful time series database constantly scrapes metrics from different exporters offered by other third-party services. With fancy browser based UI, we can easily define our Service-Level Indicator(SLI)s, monitor our web application from different perspective of views. `node-exporter` might be a good start, it provides lots of information of the CPU, memory, and I/O disk usages of those physical machines, which are useful for the auto-scaler to do their jobs.
 
 ### Pods (microservices)
 
-Kubernetes Pods are the basic unit. You can think of it as a baby computer(server) with couples of applications(containers) running inside it, which means a pod can run multiple containers. They represent the individual microservices to serve the clients. Use pods we could easily scale out a single container to multiple replicas to easily serve increasing requests.  
+Kubernetes Pods are the basic unit. You can think of it as a baby computer(server) with couples of applications(containers) running inside it, which means a pod can run multiple containers. They represent the individual microservices to serve the clients. Use pods we could easily scale out a service to multiple replicas and easily serve increasing requests.
 
 #### Rolling Upate/Rollback
 
